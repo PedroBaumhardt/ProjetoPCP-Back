@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 subrouter = APIRouter(
-    prefix="example",
+    prefix="/example",
     tags=["example"]
 )
 

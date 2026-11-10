@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class RecipeStepOutputModel(BaseModel):
     __tablename__ = "recipe_step_outputs"
     __table_args__ = (
-        CheckConstraint("quantity >= 0", name="ck_quantity_non_negative"),
+        CheckConstraint("quantity >= 0", name="quantity_non_negative"),
     )
 
     # Columns

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class ProductModel(BaseModel):
     __tablename__ = "products"
     __table_args__ = (
-        CheckConstraint("quantity >= 0", name="ck_products_quantity_non_negative"),
+        CheckConstraint("quantity >= 0", name="quantity_non_negative"),
     )
 
     # Columns

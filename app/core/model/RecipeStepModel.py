@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 class RecipeStepModel(BaseModel):
     __tablename__ = "recipe_steps"
     __table_args__ = (
-        CheckConstraint("estimated_time >= 0", name="ck_estimated_time_non_negative"),
-        CheckConstraint("step_number >= 0", name="ck_step_number_non_negative"),
+        CheckConstraint("estimated_time >= 0", name="estimated_time_non_negative"),
+        CheckConstraint("step_number >= 0", name="step_number_non_negative"),
     )
 
     # Columns
