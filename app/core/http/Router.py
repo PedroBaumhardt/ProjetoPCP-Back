@@ -1,9 +1,12 @@
 from fastapi import APIRouter, FastAPI
 
 from app.core.http.routes import example
+import importlib
+import_routes = importlib.import_module("app.core.http.routes.import")
 
 DEFAULT_ROUTES: list[APIRouter] = [
-    example.subrouter
+    example.subrouter,
+    import_routes.subrouter,
 ]
 
 class Router:
