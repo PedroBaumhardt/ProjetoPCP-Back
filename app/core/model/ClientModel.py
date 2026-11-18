@@ -5,7 +5,7 @@ from app.core.model.BaseModel import BaseModel
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from app.core.model.OrderModel import OrderModel
+    from app.core.model.ProductionOrderModel import OrderModel
 
 class ClientModel(BaseModel):
     __tablename__ = "clients"

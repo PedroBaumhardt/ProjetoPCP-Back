@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from app.core.model.StepModel import StepModel
     from app.core.model.RecipeStepInputModel import RecipeStepInputModel
     from app.core.model.RecipeStepOutputModel import RecipeStepOutputModel
-    from app.core.model.OrderModel import OrderModel
+    from app.core.model.ProductionOrderModel import OrderModel
 
 
 class RecipeStepModel(BaseModel):
@@ -62,7 +62,7 @@ class RecipeStepModel(BaseModel):
         foreign_keys="StepModel.current_recipe_step_id",
         post_update=True,
     )
-    current_orders: Mapped[list["OrderModel"]] = Relationship(
+    current_production_orders: Mapped[list["OrderModel"]] = Relationship(
         back_populates="current_recipe_step",
         foreign_keys="OrderModel.current_recipe_step_id",
     )

@@ -7,7 +7,7 @@ from app.core.model.BaseModel import BaseModel
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from app.core.model.OrderModel import OrderModel
+    from app.core.model.ProductionOrderModel import OrderModel
     from app.core.model.RecipeStepInputModel import RecipeStepInputModel
     from app.core.model.RecipeStepOutputModel import RecipeStepOutputModel
     from app.core.model.RecipeModel import RecipeModel
@@ -31,7 +31,7 @@ class ProductModel(BaseModel):
 
     # Relationships
     recipe: Mapped["RecipeModel | None"] = relationship(back_populates="product")
-    orders: Mapped[list["OrderModel"]]   = relationship(
+    production_orders: Mapped[list["OrderModel"]]   = relationship(
         back_populates="product",
         cascade="all, delete-orphan",
         passive_deletes=True,
