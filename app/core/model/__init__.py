@@ -10,3 +10,4 @@ from app.core.model.RecursoModel import RecursoModel
 from app.core.model.ClienteModel import ClienteModel
 from app.core.model.PedidoModel import PedidoModel
 from app.core.model.OrdemProducaoModel import OrdemProducaoModel
+from app.core.model.UserModel import UserModel

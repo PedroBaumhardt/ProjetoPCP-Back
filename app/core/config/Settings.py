@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     DATABASE_PORT:     int
     DATABASE_NAME:     str
 
+    JWT_SECRET:        str
+
     SQLALCHEMY_DEBUG:  bool = False
 
     def get_database_url(self) -> URL:

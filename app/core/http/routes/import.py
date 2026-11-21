@@ -1,6 +1,3 @@
-# -- rotas de importacao dos arquivos json (um endpoint por arquivo do layout)
-# -- ordem: recursos, materiais, produtos, estrutura_produtos, estoque, pedidos, ordens_producao
-
 from typing import Awaitable, Callable
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
@@ -8,6 +5,9 @@ from pydantic import ValidationError
 
 from app.core.http.dependencies import SessionDep
 from app.core.controller.ImportController import ImportController
+from app.core.views.SuccessView import SuccessView
+from app.core.views.BaseView import BaseView
+from app.core.views.ErrorView import ErrorView
 
 subrouter = APIRouter(
     prefix="/import",
@@ -16,14 +16,15 @@ subrouter = APIRouter(
 
 
 # -- le o arquivo enviado e traduz erros de validacao/dominio para http
-async def _run(action: Callable[[bytes], Awaitable[int]], file: UploadFile) -> dict:
+async def _run(action: Callable, file: UploadFile) -> BaseView:
     try:
         count = await action(await file.read())
+        content = {"imported": count}
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=e.errors(include_url=False, include_context=False))
+        return ErrorView(message=e.errors(include_url=False, include_context=False), status_code=422)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
+        return ErrorView(message=str(e))
+    return SuccessView(message=f"Imported ${count} entries", **content)
 
 
 @subrouter.post("/recursos")

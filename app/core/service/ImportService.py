@@ -1,6 +1,5 @@
-from typing import TypeVar, Awaitable, Callable
+from typing import Awaitable, Callable
 
-from pydantic import TypeAdapter
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,19 +28,18 @@ from app.core.repository import (
     OrdemProducaoRepository,
 )
 from app.core.schema.ImportSchema import (
-    ProdutoImportList,
-    MaterialImportList,
-    EstruturaProdutoImportList,
-    EstoqueImportList,
-    RecursoImportList,
-    PedidoImportList,
-    OrdemProducaoImportList,
+    ProdutoImport,
+    MaterialImport,
+    EstruturaProdutoImport,
+    EstoqueImport,
+    RecursoImport,
+    PedidoImport,
+    OrdemProducaoImport,
 )
 
-SchemaType = TypeVar("SchemaType")
 
-
-# -- service de importacao dos arquivos json (dominio)
+# -- service de importacao (dominio): recebe os schemas ja validados pelo controller,
+# -- confere as referencias e regras que dependem do banco e persiste via repositories
 # -- ordem esperada: recursos, materiais, produtos, estrutura_produtos, estoque, pedidos, ordens_producao
 
 class ImportService:
@@ -57,20 +55,6 @@ class ImportService:
         self.clientes = ClienteRepository(session)
         self.pedidos = PedidoRepository(session)
         self.ordens = OrdemProducaoRepository(session)
-
-    # -- le o arquivo json (raiz = array) e valida cada item contra o schema
-    @staticmethod
-    def _parse(content: bytes, adapter: TypeAdapter[list[SchemaType]]) -> list[SchemaType]:
-        return adapter.validate_json(content)
-
-    # -- garante que nao ha codigo repetido dentro do arquivo
-    @staticmethod
-    def _check_unique(values: list[str], label: str) -> None:
-        seen, duplicated = set(), set()
-        for value in values:
-            (duplicated if value in seen else seen).add(value)
-        if duplicated:
-            raise ValueError(f"{label} repetido no arquivo: {', '.join(sorted(duplicated))}")
 
     # -- busca registros pelo codigo e falha se algum referenciado nao existir
     @staticmethod
@@ -92,25 +76,19 @@ class ImportService:
             raise ValueError(f"violacao de integridade: {e.orig}") from e
 
     # -- recursos.json
-    async def import_recursos(self, content: bytes) -> int:
-        items = self._parse(content, RecursoImportList)
-        self._check_unique([i.codigo for i in items], "codigo de recurso")
+    async def import_recursos(self, items: list[RecursoImport]) -> int:
         entities = [RecursoModel(**i.model_dump()) for i in items]
         await self._save(lambda: self.recursos.create_many(entities))
         return len(items)
 
     # -- materiais.json
-    async def import_materiais(self, content: bytes) -> int:
-        items = self._parse(content, MaterialImportList)
-        self._check_unique([i.codigo for i in items], "codigo de material")
+    async def import_materiais(self, items: list[MaterialImport]) -> int:
         entities = [MaterialModel(**i.model_dump()) for i in items]
         await self._save(lambda: self.materiais.create_many(entities))
         return len(items)
 
     # -- produtos.json (produto + roteiro + passos)
-    async def import_produtos(self, content: bytes) -> int:
-        items = self._parse(content, ProdutoImportList)
-        self._check_unique([i.codigo for i in items], "codigo de produto")
+    async def import_produtos(self, items: list[ProdutoImport]) -> int:
         recursos = {passo.recurso for i in items for passo in i.roteiro}
         await self._fetch_by(self.recursos, "codigo", recursos, "recurso")
 
@@ -135,9 +113,7 @@ class ImportService:
         return len(items)
 
     # -- estrutura_produtos.json (estrutura + componentes)
-    async def import_estruturas_produto(self, content: bytes) -> int:
-        items = self._parse(content, EstruturaProdutoImportList)
-        self._check_unique([i.produto for i in items], "produto")
+    async def import_estruturas_produto(self, items: list[EstruturaProdutoImport]) -> int:
         produtos = await self._fetch_by(self.produtos, "codigo", {i.produto for i in items}, "produto")
         materiais = {componente.material for i in items for componente in i.componentes}
         await self._fetch_by(self.materiais, "codigo", materiais, "material")
@@ -158,9 +134,7 @@ class ImportService:
         return len(items)
 
     # -- estoque.json
-    async def import_estoque(self, content: bytes) -> int:
-        items = self._parse(content, EstoqueImportList)
-        self._check_unique([i.material for i in items], "material")
+    async def import_estoque(self, items: list[EstoqueImport]) -> int:
         await self._fetch_by(self.materiais, "codigo", {i.material for i in items}, "material")
         entities = [
             EstoqueModel(material_codigo=i.material, **i.model_dump(exclude={"material"}))
@@ -170,9 +144,7 @@ class ImportService:
         return len(items)
 
     # -- pedidos.json (cliente e criado pelo nome caso ainda nao exista)
-    async def import_pedidos(self, content: bytes) -> int:
-        items = self._parse(content, PedidoImportList)
-        self._check_unique([i.numero for i in items], "numero de pedido")
+    async def import_pedidos(self, items: list[PedidoImport]) -> int:
         produtos = await self._fetch_by(self.produtos, "codigo", {i.produto for i in items}, "produto")
         inativos = sorted({i.produto for i in items if not produtos[i.produto].ativo})
         if inativos:
@@ -198,9 +170,7 @@ class ImportService:
         return len(items)
 
     # -- ordens_producao.json
-    async def import_ordens_producao(self, content: bytes) -> int:
-        items = self._parse(content, OrdemProducaoImportList)
-        self._check_unique([i.numero for i in items], "numero de ordem")
+    async def import_ordens_producao(self, items: list[OrdemProducaoImport]) -> int:
         produtos = await self._fetch_by(self.produtos, "codigo", {i.produto for i in items}, "produto")
         pedidos = await self._fetch_by(
             self.pedidos, "numero", {i.pedido for i in items if i.pedido}, "pedido"

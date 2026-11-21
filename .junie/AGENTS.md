@@ -56,6 +56,7 @@ app/
 ## Padrões de Código
 
 - Comentários usam `# --` (não parecer IA)
+- NÃO colocar comentários de cabeçalho no início dos arquivos (ex: `# -- controller de X: faz Y`); o arquivo começa direto nos imports
 - Models herdam de `BaseModel` que define `id` (UUID), `created_at`, `updated_at`
 - Repositories são genéricos: `BaseRepository[T]` com `get_all`, `get_by_id`, `get_by_field_in`, `create`, `create_many`, `update`, `delete`
 - Importação recebe arquivos JSON (raiz = array) validados por schemas Pydantic em `app/core/schema/`

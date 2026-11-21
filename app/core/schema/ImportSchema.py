@@ -1,6 +1,3 @@
-# -- schemas dos arquivos json de importacao (layout "Layout arquivos PCP")
-# -- campos extras sao ignorados: o layout permite que os grupos acrescentem campos
-
 from datetime import date
 from typing import Literal, Annotated
 
