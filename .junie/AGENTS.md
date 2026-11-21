@@ -10,7 +10,8 @@ Fluxo: **Router → Controller → Service → Repository → Model**
 
 - Até Service é considerado **domínio**
 - Controllers e Services de domínio são agrupados por funcionalidade (ex: `ImportController`, `ImportService`), não um por entidade
-- Existem `BaseController`, `BaseService` e `BaseRepository` genéricos (com CRUD) para uso futuro
+- Existem `BaseService` e `BaseRepository` genéricos (com CRUD) para uso futuro
+- `BaseController` NÃO tem CRUD: controllers não importam nem recebem Models, apenas delegam ao Service
 
 ```
 app/
@@ -24,6 +25,7 @@ app/
 │   │   └── routes/       -- arquivos de rota (import.py, example.py)
 │   ├── model/            -- SQLAlchemy models (BaseModel + 11 entidades)
 │   ├── repository/       -- BaseRepository + 11 repositories concretos
+│   ├── schema/           -- schemas Pydantic dos arquivos JSON de importação (ImportSchema)
 │   └── service/          -- BaseService + services de domínio (ImportService)
 └── util/
 ```
@@ -55,21 +57,24 @@ app/
 
 - Comentários usam `# --` (não parecer IA)
 - Models herdam de `BaseModel` que define `id` (UUID), `created_at`, `updated_at`
-- Repositories são genéricos: `BaseRepository[T]` com `get_all`, `get_by_id`, `create`, `update`, `delete`
-- CSV import usa delimitador `;`, encoding UTF-8-sig
+- Repositories são genéricos: `BaseRepository[T]` com `get_all`, `get_by_id`, `get_by_field_in`, `create`, `create_many`, `update`, `delete`
+- Importação recebe arquivos JSON (raiz = array) validados por schemas Pydantic em `app/core/schema/`
 - Toda a lógica de domínio (parsing, resolução de FKs) fica no Service, não no Controller ou na Rota
 
-## Importação CSV
+## Importação JSON
 
-Ordem de importação documentada em `observations.md` (gitignored). Resumo:
-1. Recurso, Material, Cliente, Produto (sem dependências, qualquer ordem)
-2. Estoque, Roteiro, EstruturaProduto (dependem das bases)
-3. PassoRoteiro, Componente (dependem dos pivots)
-4. Pedido (depende de Cliente + Produto)
-5. OrdemProducao (depende de Produto + Pedido opcional)
+Layout definido no PDF "Layout arquivos PCP": 7 arquivos JSON, um endpoint `POST /import/<arquivo>` (upload) para cada.
+Ordem de importação (por dependência):
+1. `recursos`, `materiais` (sem dependências)
+2. `produtos` (cria Produto + Roteiro + PassoRoteiro; depende de recursos)
+3. `estrutura-produtos` (cria EstruturaProduto + Componente; depende de produtos + materiais)
+4. `estoque` (depende de materiais)
+5. `pedidos` (depende de produtos ativos; Cliente é buscado/criado pelo nome)
+6. `ordens-producao` (depende de produtos + pedidos opcionais)
+
+Erros de layout retornam 422; códigos inexistentes, duplicados ou regras de consistência retornam 400.
 
 ## Arquivos Importantes
 
-- `observations.md` — ordem de importação (gitignored)
 - `alembic/` — migrations
 - `pyproject.toml` — dependências (uv)

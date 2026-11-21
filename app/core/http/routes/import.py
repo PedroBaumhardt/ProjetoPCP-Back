@@ -1,6 +1,10 @@
-# -- rotas de importacao csv
+# -- rotas de importacao dos arquivos json (um endpoint por arquivo do layout)
+# -- ordem: recursos, materiais, produtos, estrutura_produtos, estoque, pedidos, ordens_producao
+
+from typing import Awaitable, Callable
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from pydantic import ValidationError
 
 from app.core.http.dependencies import SessionDep
 from app.core.controller.ImportController import ImportController
@@ -11,133 +15,47 @@ subrouter = APIRouter(
 )
 
 
-# -- 1. Recurso ---------------------------------------------------------------
+# -- le o arquivo enviado e traduz erros de validacao/dominio para http
+async def _run(action: Callable[[bytes], Awaitable[int]], file: UploadFile) -> dict:
+    try:
+        count = await action(await file.read())
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=e.errors(include_url=False, include_context=False))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"imported": count}
+
 
 @subrouter.post("/recursos")
 async def import_recursos(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_recursos(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
+    return await _run(ImportController(session).import_recursos, file)
 
-
-# -- 2. Material --------------------------------------------------------------
 
 @subrouter.post("/materiais")
 async def import_materiais(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_materiais(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
+    return await _run(ImportController(session).import_materiais, file)
 
-
-# -- 3. Cliente ----------------------------------------------------------------
-
-@subrouter.post("/clientes")
-async def import_clientes(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_clientes(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
-
-
-# -- 4. Produto ----------------------------------------------------------------
 
 @subrouter.post("/produtos")
 async def import_produtos(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_produtos(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
+    return await _run(ImportController(session).import_produtos, file)
 
 
-# -- 5. Estoque ----------------------------------------------------------------
+@subrouter.post("/estrutura-produtos")
+async def import_estruturas_produto(session: SessionDep, file: UploadFile = File(...)):
+    return await _run(ImportController(session).import_estruturas_produto, file)
+
 
 @subrouter.post("/estoque")
 async def import_estoque(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_estoque(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
+    return await _run(ImportController(session).import_estoque, file)
 
-
-# -- 6. Roteiro (cabecalho) ----------------------------------------------------
-
-@subrouter.post("/roteiros")
-async def import_roteiros(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_roteiros(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
-
-
-# -- 7. Passo Roteiro ----------------------------------------------------------
-
-@subrouter.post("/passos-roteiro")
-async def import_passos_roteiro(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_passos_roteiro(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
-
-
-# -- 8. Estrutura Produto (cabecalho) ------------------------------------------
-
-@subrouter.post("/estruturas-produto")
-async def import_estruturas_produto(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_estruturas_produto(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
-
-
-# -- 9. Componente -------------------------------------------------------------
-
-@subrouter.post("/componentes")
-async def import_componentes(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_componentes(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
-
-
-# -- 10. Pedido ----------------------------------------------------------------
 
 @subrouter.post("/pedidos")
 async def import_pedidos(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_pedidos(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
+    return await _run(ImportController(session).import_pedidos, file)
 
-
-# -- 11. Ordem de Producao ----------------------------------------------------
 
 @subrouter.post("/ordens-producao")
 async def import_ordens_producao(session: SessionDep, file: UploadFile = File(...)):
-    controller = ImportController(session)
-    try:
-        count = await controller.import_ordens_producao(await file.read())
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return {"imported": count}
+    return await _run(ImportController(session).import_ordens_producao, file)
