@@ -1,0 +1,14 @@
+[
+  {"codigo": "M001", "descricao": "Chapa de aco 2mm", "tipo": "materia_prima", "unidade_medida": "M2", "prazo_reposicao_dias": 10},
+  {"codigo": "M002", "descricao": "Barra de aluminio 1 pol", "tipo": "materia_prima", "unidade_medida": "M", "prazo_reposicao_dias": 7},
+  {"codigo": "M003", "descricao": "Tinta epoxi cinza", "tipo": "materia_prima", "unidade_medida": "L", "prazo_reposicao_dias": 5},
+  {"codigo": "M004", "descricao": "Granulado de polipropileno", "tipo": "materia_prima", "unidade_medida": "KG", "prazo_reposicao_dias": 15},
+  {"codigo": "M005", "descricao": "Parafuso M6x20", "tipo": "componente", "unidade_medida": "UN", "prazo_reposicao_dias": 3},
+  {"codigo": "M006", "descricao": "Porca M6", "tipo": "componente", "unidade_medida": "UN", "prazo_reposicao_dias": 3},
+  {"codigo": "M007", "descricao": "Rolamento 6202", "tipo": "componente", "unidade_medida": "UN", "prazo_reposicao_dias": 12},
+  {"codigo": "M008", "descricao": "Motor eletrico 0,5cv", "tipo": "componente", "unidade_medida": "UN", "prazo_reposicao_dias": 20},
+  {"codigo": "M009", "descricao": "Graxa de litio", "tipo": "materia_prima", "unidade_medida": "G"},
+  {"codigo": "M010", "descricao": "Caixa de papelao media", "tipo": "embalagem", "unidade_medida": "UN", "prazo_reposicao_dias": 4},
+  {"codigo": "M011", "descricao": "Plastico bolha", "tipo": "embalagem", "unidade_medida": "M", "prazo_reposicao_dias": 4},
+  {"codigo": "M012", "descricao": "Etiqueta adesiva", "tipo": "embalagem", "unidade_medida": "UN", "prazo_reposicao_dias": null}
+]

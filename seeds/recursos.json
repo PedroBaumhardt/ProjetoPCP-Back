@@ -1,0 +1,9 @@
+[
+  {"codigo": "R01", "descricao": "Serra de fita", "tipo": "maquina", "capacidade_horas_dia": 16, "status": "disponivel"},
+  {"codigo": "R02", "descricao": "Torno CNC", "tipo": "maquina", "capacidade_horas_dia": 16, "status": "disponivel"},
+  {"codigo": "R03", "descricao": "Prensa hidraulica", "tipo": "maquina", "capacidade_horas_dia": 8, "status": "manutencao"},
+  {"codigo": "R04", "descricao": "Cabine de pintura", "tipo": "maquina", "capacidade_horas_dia": 8, "status": "disponivel"},
+  {"codigo": "R05", "descricao": "Bancada de montagem", "tipo": "posto_manual", "capacidade_horas_dia": 8, "status": "disponivel"},
+  {"codigo": "R06", "descricao": "Equipe de embalagem", "tipo": "equipe", "capacidade_horas_dia": 8.5, "status": "disponivel"},
+  {"codigo": "R07", "descricao": "Furadeira de coluna", "tipo": "maquina", "capacidade_horas_dia": 8, "status": "inativo"}
+]

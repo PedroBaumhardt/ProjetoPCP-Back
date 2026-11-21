@@ -1,0 +1,12 @@
+[
+  {"numero": "PED-0001", "cliente": "Metalurgica Alfa Ltda", "produto": "P001", "quantidade": 200, "data_pedido": "2026-11-02", "data_entrega": "2026-11-20", "prioridade": "normal", "status": "atendido"},
+  {"numero": "PED-0002", "cliente": "Construtora Horizonte S.A.", "produto": "P001", "quantidade": 500, "data_pedido": "2026-11-10", "data_entrega": "2026-12-05", "prioridade": "alta", "status": "em_producao"},
+  {"numero": "PED-0003", "cliente": "Agro Vale do Sul", "produto": "P002", "quantidade": 60, "data_pedido": "2026-11-12", "data_entrega": "2026-12-10", "prioridade": "normal", "status": "em_producao"},
+  {"numero": "PED-0004", "cliente": "Ferragens Beta", "produto": "P003", "quantidade": 1000, "data_pedido": "2026-11-14", "data_entrega": "2026-11-28", "prioridade": "alta", "status": "pendente"},
+  {"numero": "PED-0005", "cliente": "Agro Vale do Sul", "produto": "P004", "quantidade": 30, "data_pedido": "2026-11-15", "data_entrega": "2026-12-20", "prioridade": "normal", "status": "pendente"},
+  {"numero": "PED-0006", "cliente": "Embalagens Gama", "produto": "P005", "quantidade": 5000, "data_pedido": "2026-11-16", "data_entrega": "2026-12-01", "prioridade": "alta", "status": "pendente"},
+  {"numero": "PED-0007", "cliente": "Metalurgica Alfa Ltda", "produto": "P003", "quantidade": 300, "data_pedido": "2026-11-17", "data_entrega": "2026-12-15", "prioridade": "baixa", "status": "pendente"},
+  {"numero": "PED-0008", "cliente": "Construtora Horizonte S.A.", "produto": "P004", "quantidade": 15, "data_pedido": "2026-11-05", "data_entrega": "2026-11-25", "prioridade": "normal", "status": "cancelado"},
+  {"numero": "PED-0009", "cliente": "Ferragens Beta", "produto": "P002", "quantidade": 40, "data_pedido": "2026-11-19", "data_entrega": "2027-01-10", "prioridade": "baixa", "status": "pendente"},
+  {"numero": "PED-0010", "cliente": "Embalagens Gama", "produto": "P005", "quantidade": 2000, "data_pedido": "2026-11-20", "data_entrega": "2026-11-20", "prioridade": "alta", "status": "pendente"}
+]

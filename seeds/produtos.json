@@ -1,0 +1,52 @@
+[
+  {
+    "codigo": "P001", "descricao": "Suporte metalico de parede", "unidade_medida": "UN", "lote_minimo": 50, "ativo": true,
+    "roteiro": [
+      {"sequencia": 1, "recurso": "R01", "tempo_unitario_min": 2.5},
+      {"sequencia": 2, "recurso": "R03", "tempo_unitario_min": 1.2},
+      {"sequencia": 3, "recurso": "R04", "tempo_unitario_min": 3.0},
+      {"sequencia": 4, "recurso": "R06", "tempo_unitario_min": 0.8}
+    ]
+  },
+  {
+    "codigo": "P002", "descricao": "Eixo usinado com rolamentos", "unidade_medida": "UN", "lote_minimo": 20, "ativo": true,
+    "roteiro": [
+      {"sequencia": 1, "recurso": "R01", "tempo_unitario_min": 1.5},
+      {"sequencia": 2, "recurso": "R02", "tempo_unitario_min": 12.0},
+      {"sequencia": 3, "recurso": "R05", "tempo_unitario_min": 4.0},
+      {"sequencia": 4, "recurso": "R06", "tempo_unitario_min": 1.0}
+    ]
+  },
+  {
+    "codigo": "P003", "descricao": "Kit de fixacao M6", "unidade_medida": "CJ", "lote_minimo": 100, "ativo": true,
+    "roteiro": [
+      {"sequencia": 1, "recurso": "R05", "tempo_unitario_min": 0.5},
+      {"sequencia": 2, "recurso": "R06", "tempo_unitario_min": 0.3}
+    ]
+  },
+  {
+    "codigo": "P004", "descricao": "Ventilador industrial", "unidade_medida": "UN", "lote_minimo": 10, "ativo": true,
+    "roteiro": [
+      {"sequencia": 1, "recurso": "R01", "tempo_unitario_min": 4.0},
+      {"sequencia": 2, "recurso": "R03", "tempo_unitario_min": 2.0},
+      {"sequencia": 3, "recurso": "R04", "tempo_unitario_min": 5.0},
+      {"sequencia": 4, "recurso": "R05", "tempo_unitario_min": 18.0},
+      {"sequencia": 5, "recurso": "R06", "tempo_unitario_min": 2.5}
+    ]
+  },
+  {
+    "codigo": "P005", "descricao": "Tampa plastica injetada", "unidade_medida": "UN", "lote_minimo": 200, "ativo": true,
+    "roteiro": [
+      {"sequencia": 1, "recurso": "R03", "tempo_unitario_min": 0.4},
+      {"sequencia": 2, "recurso": "R06", "tempo_unitario_min": 0.2}
+    ]
+  },
+  {
+    "codigo": "P006", "descricao": "Suporte metalico modelo antigo", "unidade_medida": "UN", "lote_minimo": 50, "ativo": false,
+    "roteiro": [
+      {"sequencia": 1, "recurso": "R01", "tempo_unitario_min": 3.0},
+      {"sequencia": 2, "recurso": "R07", "tempo_unitario_min": 1.5},
+      {"sequencia": 3, "recurso": "R06", "tempo_unitario_min": 0.8}
+    ]
+  }
+]

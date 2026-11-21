@@ -1,0 +1,58 @@
+[
+  {
+    "produto": "P001",
+    "componentes": [
+      {"material": "M001", "quantidade": 0.15, "perda_percentual": 5},
+      {"material": "M003", "quantidade": 0.05, "perda_percentual": 10},
+      {"material": "M005", "quantidade": 4},
+      {"material": "M010", "quantidade": 0.1},
+      {"material": "M012", "quantidade": 1, "perda_percentual": 2}
+    ]
+  },
+  {
+    "produto": "P002",
+    "componentes": [
+      {"material": "M002", "quantidade": 0.4, "perda_percentual": 8},
+      {"material": "M007", "quantidade": 2},
+      {"material": "M009", "quantidade": 15, "perda_percentual": 5},
+      {"material": "M011", "quantidade": 0.5},
+      {"material": "M012", "quantidade": 1}
+    ]
+  },
+  {
+    "produto": "P003",
+    "componentes": [
+      {"material": "M005", "quantidade": 10, "perda_percentual": 1},
+      {"material": "M006", "quantidade": 10, "perda_percentual": 1},
+      {"material": "M012", "quantidade": 1}
+    ]
+  },
+  {
+    "produto": "P004",
+    "componentes": [
+      {"material": "M001", "quantidade": 0.8, "perda_percentual": 6},
+      {"material": "M003", "quantidade": 0.2, "perda_percentual": 10},
+      {"material": "M005", "quantidade": 12},
+      {"material": "M006", "quantidade": 12},
+      {"material": "M007", "quantidade": 2},
+      {"material": "M008", "quantidade": 1},
+      {"material": "M010", "quantidade": 1},
+      {"material": "M012", "quantidade": 1}
+    ]
+  },
+  {
+    "produto": "P005",
+    "componentes": [
+      {"material": "M004", "quantidade": 0.035, "perda_percentual": 3},
+      {"material": "M010", "quantidade": 0.02}
+    ]
+  },
+  {
+    "produto": "P006",
+    "componentes": [
+      {"material": "M001", "quantidade": 0.18, "perda_percentual": 7},
+      {"material": "M005", "quantidade": 4},
+      {"material": "M010", "quantidade": 0.1}
+    ]
+  }
+]
