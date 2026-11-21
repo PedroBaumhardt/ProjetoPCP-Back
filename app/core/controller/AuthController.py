@@ -15,11 +15,11 @@ class AuthController(BaseController[AuthService]):
         return AuthSchema(email=email, password=password)
 
     async def login(self, email: str, password: str) -> dict:
-        dados = self._parse(email, password)
-        tkn = await self.service.login(dados)
+        data = self._parse(email, password)
+        tkn = await self.service.login(data)
         return {"token": tkn}
 
     async def register(self, email: str, password: str) -> dict:
-        dados = self._parse(email, password)
-        tkn = await self.service.register(dados)
+        data = self._parse(email, password)
+        tkn = await self.service.register(data)
         return {"token": tkn}

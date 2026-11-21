@@ -20,7 +20,7 @@ class JWTTokenAdapter(TokenPort):
         name = user.email.split("@")[0]
 
         payload = {
-            "sub": user.id,
+            "sub": str(user.id),
             "email": user.email,
             "role": user.role,
             "name": name,

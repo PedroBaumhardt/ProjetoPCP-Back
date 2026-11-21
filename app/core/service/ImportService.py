@@ -46,15 +46,15 @@ class ImportService:
     def __init__(self, session: AsyncSession) -> None:
         # -- a sessao fica no service so para controlar a transacao (commit/rollback)
         self.session = session
-        self.recursos = RecursoRepository(session)
-        self.materiais = MaterialRepository(session)
-        self.produtos = ProdutoRepository(session)
-        self.roteiros = RoteiroRepository(session)
-        self.estruturas = EstruturaProdutoRepository(session)
-        self.estoque = EstoqueRepository(session)
-        self.clientes = ClienteRepository(session)
-        self.pedidos = PedidoRepository(session)
-        self.ordens = OrdemProducaoRepository(session)
+        self.resources = RecursoRepository(session)
+        self.materials = MaterialRepository(session)
+        self.products = ProdutoRepository(session)
+        self.routings = RoteiroRepository(session)
+        self.structures = EstruturaProdutoRepository(session)
+        self.stock = EstoqueRepository(session)
+        self.customers = ClienteRepository(session)
+        self.sales_orders = PedidoRepository(session)
+        self.production_orders = OrdemProducaoRepository(session)
 
     # -- busca registros pelo codigo e falha se algum referenciado nao existir
     @staticmethod
@@ -78,108 +78,108 @@ class ImportService:
     # -- recursos.json
     async def import_recursos(self, items: list[RecursoImport]) -> int:
         entities = [RecursoModel(**i.model_dump()) for i in items]
-        await self._save(lambda: self.recursos.create_many(entities))
+        await self._save(lambda: self.resources.create_many(entities))
         return len(items)
 
     # -- materiais.json
     async def import_materiais(self, items: list[MaterialImport]) -> int:
         entities = [MaterialModel(**i.model_dump()) for i in items]
-        await self._save(lambda: self.materiais.create_many(entities))
+        await self._save(lambda: self.materials.create_many(entities))
         return len(items)
 
     # -- produtos.json (produto + roteiro + passos)
     async def import_produtos(self, items: list[ProdutoImport]) -> int:
-        recursos = {passo.recurso for i in items for passo in i.roteiro}
-        await self._fetch_by(self.recursos, "codigo", recursos, "recurso")
+        resource_codes = {step.recurso for i in items for step in i.roteiro}
+        await self._fetch_by(self.resources, "codigo", resource_codes, "recurso")
 
-        produtos, roteiros = [], []
+        products, routings = [], []
         for i in items:
-            produto = ProdutoModel(**i.model_dump(exclude={"roteiro"}))
-            roteiro = RoteiroModel(produto_rel=produto)
-            roteiro.passos = [
+            product = ProdutoModel(**i.model_dump(exclude={"roteiro"}))
+            routing = RoteiroModel(produto_rel=product)
+            routing.passos = [
                 PassoRoteiroModel(
-                    sequencia=passo.sequencia,
-                    recurso_codigo=passo.recurso,
-                    tempo_unitario_min=passo.tempo_unitario_min,
+                    sequencia=step.sequencia,
+                    recurso_codigo=step.recurso,
+                    tempo_unitario_min=step.tempo_unitario_min,
                 )
-                for passo in i.roteiro
+                for step in i.roteiro
             ]
-            produtos.append(produto)
-            roteiros.append(roteiro)
+            products.append(product)
+            routings.append(routing)
         await self._save(
-            lambda: self.produtos.create_many(produtos),
-            lambda: self.roteiros.create_many(roteiros),
+            lambda: self.products.create_many(products),
+            lambda: self.routings.create_many(routings),
         )
         return len(items)
 
     # -- estrutura_produtos.json (estrutura + componentes)
     async def import_estruturas_produto(self, items: list[EstruturaProdutoImport]) -> int:
-        produtos = await self._fetch_by(self.produtos, "codigo", {i.produto for i in items}, "produto")
-        materiais = {componente.material for i in items for componente in i.componentes}
-        await self._fetch_by(self.materiais, "codigo", materiais, "material")
+        products = await self._fetch_by(self.products, "codigo", {i.produto for i in items}, "produto")
+        material_codes = {component.material for i in items for component in i.componentes}
+        await self._fetch_by(self.materials, "codigo", material_codes, "material")
 
         entities = []
         for i in items:
-            estrutura = EstruturaProdutoModel(produto_id=produtos[i.produto].id)
-            estrutura.componentes = [
+            structure = EstruturaProdutoModel(produto_id=products[i.produto].id)
+            structure.componentes = [
                 ComponenteModel(
-                    material_codigo=componente.material,
-                    quantidade=componente.quantidade,
-                    perda_percentual=componente.perda_percentual or 0,
+                    material_codigo=component.material,
+                    quantidade=component.quantidade,
+                    perda_percentual=component.perda_percentual,
                 )
-                for componente in i.componentes
+                for component in i.componentes
             ]
-            entities.append(estrutura)
-        await self._save(lambda: self.estruturas.create_many(entities))
+            entities.append(structure)
+        await self._save(lambda: self.structures.create_many(entities))
         return len(items)
 
     # -- estoque.json
     async def import_estoque(self, items: list[EstoqueImport]) -> int:
-        await self._fetch_by(self.materiais, "codigo", {i.material for i in items}, "material")
+        await self._fetch_by(self.materials, "codigo", {i.material for i in items}, "material")
         entities = [
             EstoqueModel(material_codigo=i.material, **i.model_dump(exclude={"material"}))
             for i in items
         ]
-        await self._save(lambda: self.estoque.create_many(entities))
+        await self._save(lambda: self.stock.create_many(entities))
         return len(items)
 
     # -- pedidos.json (cliente e criado pelo nome caso ainda nao exista)
     async def import_pedidos(self, items: list[PedidoImport]) -> int:
-        produtos = await self._fetch_by(self.produtos, "codigo", {i.produto for i in items}, "produto")
-        inativos = sorted({i.produto for i in items if not produtos[i.produto].ativo})
-        if inativos:
-            raise ValueError(f"pedido para produto inativo: {', '.join(inativos)}")
+        products = await self._fetch_by(self.products, "codigo", {i.produto for i in items}, "produto")
+        inactive = sorted({i.produto for i in items if not products[i.produto].ativo})
+        if inactive:
+            raise ValueError(f"pedido para produto inativo: {', '.join(inactive)}")
 
-        nomes = {i.cliente for i in items}
-        clientes = {cliente.nome: cliente for cliente in await self.clientes.get_by_field_in("nome", nomes)}
-        novos = [ClienteModel(nome=nome) for nome in sorted(nomes - clientes.keys())]
-        clientes.update({cliente.nome: cliente for cliente in novos})
+        names = {i.cliente for i in items}
+        customers = {customer.nome: customer for customer in await self.customers.get_by_field_in("nome", names)}
+        new_customers = [ClienteModel(nome=name) for name in sorted(names - customers.keys())]
+        customers.update({customer.nome: customer for customer in new_customers})
 
         entities = [
             PedidoModel(
-                cliente_rel=clientes[i.cliente],
+                cliente_rel=customers[i.cliente],
                 produto_codigo=i.produto,
                 **i.model_dump(exclude={"cliente", "produto"}),
             )
             for i in items
         ]
         await self._save(
-            lambda: self.clientes.create_many(novos),
-            lambda: self.pedidos.create_many(entities),
+            lambda: self.customers.create_many(new_customers),
+            lambda: self.sales_orders.create_many(entities),
         )
         return len(items)
 
     # -- ordens_producao.json
     async def import_ordens_producao(self, items: list[OrdemProducaoImport]) -> int:
-        produtos = await self._fetch_by(self.produtos, "codigo", {i.produto for i in items}, "produto")
-        pedidos = await self._fetch_by(
-            self.pedidos, "numero", {i.pedido for i in items if i.pedido}, "pedido"
+        products = await self._fetch_by(self.products, "codigo", {i.produto for i in items}, "produto")
+        sales_orders = await self._fetch_by(
+            self.sales_orders, "numero", {i.pedido for i in items if i.pedido}, "pedido"
         )
 
         for i in items:
-            if i.quantidade_planejada < produtos[i.produto].lote_minimo:
+            if i.quantidade_planejada < products[i.produto].lote_minimo:
                 raise ValueError(f"ordem '{i.numero}' com quantidade_planejada abaixo do lote_minimo")
-            if i.pedido and pedidos[i.pedido].produto_codigo != i.produto:
+            if i.pedido and sales_orders[i.pedido].produto_codigo != i.produto:
                 raise ValueError(f"ordem '{i.numero}' de produto diferente do pedido '{i.pedido}'")
 
         entities = [
@@ -190,5 +190,5 @@ class ImportService:
             )
             for i in items
         ]
-        await self._save(lambda: self.ordens.create_many(entities))
+        await self._save(lambda: self.production_orders.create_many(entities))
         return len(items)

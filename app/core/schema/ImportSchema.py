@@ -3,26 +3,30 @@ from typing import Literal, Annotated
 
 from pydantic import BaseModel, Field, TypeAdapter, model_validator
 
-CodigoProduto = Annotated[str, Field(pattern=r"^P\d{3}$")]
-CodigoMaterial = Annotated[str, Field(pattern=r"^M\d{3}$")]
-CodigoRecurso = Annotated[str, Field(pattern=r"^R\d{2}$")]
-NumeroPedido = Annotated[str, Field(pattern=r"^PED-\d{4}$")]
-NumeroOrdem = Annotated[str, Field(pattern=r"^OP-\d{4}$")]
+ProductCode = Annotated[str, Field(pattern=r"^P\d{3}$")]
+MaterialCode = Annotated[str, Field(pattern=r"^M\d{3}$")]
+ResourceCode = Annotated[str, Field(pattern=r"^R\d{2}$")]
+SalesOrderNumber = Annotated[str, Field(pattern=r"^PED-\d{4}$")]
+ProductionOrderNumber = Annotated[str, Field(pattern=r"^OP-\d{4}$")]
 
-Prioridade = Literal["alta", "normal", "baixa"]
+# -- mesmo tamanho das colunas String(n) dos models, para nao estourar no banco
+Text255 = Annotated[str, Field(max_length=255)]
+Text500 = Annotated[str, Field(max_length=500)]
+
+Priority = Literal["alta", "normal", "baixa"]
 
 
 # -- 1. produtos.json ---------------------------------------------------------
 
 class PassoRoteiroImport(BaseModel):
     sequencia: int = Field(ge=1)
-    recurso: CodigoRecurso
+    recurso: ResourceCode
     tempo_unitario_min: float = Field(gt=0)
 
 
 class ProdutoImport(BaseModel):
-    codigo: CodigoProduto
-    descricao: str
+    codigo: ProductCode
+    descricao: Text255
     unidade_medida: Literal["UN", "CJ", "KG", "M", "L"]
     lote_minimo: int = Field(ge=1)
     ativo: bool
@@ -32,8 +36,8 @@ class ProdutoImport(BaseModel):
 # -- 2. materiais.json --------------------------------------------------------
 
 class MaterialImport(BaseModel):
-    codigo: CodigoMaterial
-    descricao: str
+    codigo: MaterialCode
+    descricao: Text255
     tipo: Literal["materia_prima", "componente", "embalagem"]
     unidade_medida: Literal["UN", "KG", "G", "M", "M2", "L"]
     prazo_reposicao_dias: int | None = Field(default=None, ge=0)
@@ -42,19 +46,19 @@ class MaterialImport(BaseModel):
 # -- 3. estrutura_produtos.json -----------------------------------------------
 
 class ComponenteImport(BaseModel):
-    material: CodigoMaterial
+    material: MaterialCode
     quantidade: float = Field(gt=0)
     perda_percentual: float | None = Field(default=None, ge=0, le=100)
 
 
 class EstruturaProdutoImport(BaseModel):
-    produto: CodigoProduto
+    produto: ProductCode
     componentes: list[ComponenteImport] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def _material_nao_repete(self):
-        materiais = [componente.material for componente in self.componentes]
-        if len(materiais) != len(set(materiais)):
+    def _check_unique_materials(self):
+        materials = [component.material for component in self.componentes]
+        if len(materials) != len(set(materials)):
             raise ValueError(f"material repetido na estrutura do produto '{self.produto}'")
         return self
 
@@ -62,14 +66,14 @@ class EstruturaProdutoImport(BaseModel):
 # -- 4. estoque.json ----------------------------------------------------------
 
 class EstoqueImport(BaseModel):
-    material: CodigoMaterial
+    material: MaterialCode
     quantidade_disponivel: float = Field(ge=0)
     quantidade_reservada: float = Field(ge=0)
     estoque_minimo: float = Field(ge=0)
     data_atualizacao: date
 
     @model_validator(mode="after")
-    def _reservada_ate_disponivel(self):
+    def _check_reserved_within_available(self):
         if self.quantidade_reservada > self.quantidade_disponivel:
             raise ValueError(f"quantidade_reservada maior que disponivel no material '{self.material}'")
         return self
@@ -78,8 +82,8 @@ class EstoqueImport(BaseModel):
 # -- 5. recursos.json ---------------------------------------------------------
 
 class RecursoImport(BaseModel):
-    codigo: CodigoRecurso
-    descricao: str
+    codigo: ResourceCode
+    descricao: Text255
     tipo: Literal["maquina", "posto_manual", "equipe"]
     capacidade_horas_dia: float = Field(gt=0, le=24)
     status: Literal["disponivel", "manutencao", "inativo"]
@@ -88,17 +92,17 @@ class RecursoImport(BaseModel):
 # -- 6. pedidos.json ----------------------------------------------------------
 
 class PedidoImport(BaseModel):
-    numero: NumeroPedido
-    cliente: str
-    produto: CodigoProduto
+    numero: SalesOrderNumber
+    cliente: Text255
+    produto: ProductCode
     quantidade: int = Field(gt=0)
     data_pedido: date
     data_entrega: date
-    prioridade: Prioridade
+    prioridade: Priority
     status: Literal["pendente", "em_producao", "atendido", "cancelado"]
 
     @model_validator(mode="after")
-    def _entrega_apos_pedido(self):
+    def _check_delivery_after_order(self):
         if self.data_entrega < self.data_pedido:
             raise ValueError(f"data_entrega anterior a data_pedido no pedido '{self.numero}'")
         return self
@@ -107,10 +111,10 @@ class PedidoImport(BaseModel):
 # -- 7. ordens_producao.json --------------------------------------------------
 
 class OrdemProducaoImport(BaseModel):
-    numero: NumeroOrdem
-    produto: CodigoProduto
-    pedido: NumeroPedido | None = None
-    prioridade: Prioridade
+    numero: ProductionOrderNumber
+    produto: ProductCode
+    pedido: SalesOrderNumber | None = None
+    prioridade: Priority
     sequencia_programacao: int = Field(ge=1)
     quantidade_planejada: int = Field(gt=0)
     quantidade_produzida: int = Field(ge=0)
@@ -119,10 +123,10 @@ class OrdemProducaoImport(BaseModel):
     data_fim_prevista: date
     data_conclusao: date | None = None
     status: Literal["planejada", "liberada", "em_producao", "concluida", "cancelada"]
-    observacao: str | None = None
+    observacao: Text500 | None = None
 
     @model_validator(mode="after")
-    def _regras_da_ordem(self):
+    def _check_order_rules(self):
         if self.data_inicio_prevista < self.data_emissao:
             raise ValueError(f"data_inicio_prevista anterior a data_emissao na ordem '{self.numero}'")
         if self.data_fim_prevista < self.data_inicio_prevista:

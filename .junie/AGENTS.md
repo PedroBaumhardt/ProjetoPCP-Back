@@ -55,6 +55,7 @@ app/
 
 ## Padrões de Código
 
+- Nomes de variáveis, funções, constantes, classes e type aliases em **inglês** (ex: `Text255`, `PASSWORD_MAX_BYTES`, `AuthRequest`). Exceção: campos de schema/model que espelham o layout JSON ou colunas do banco mantêm o nome original (ex: `descricao`, `codigo`)
 - Comentários usam `# --` (não parecer IA)
 - NÃO colocar comentários de cabeçalho no início dos arquivos (ex: `# -- controller de X: faz Y`); o arquivo começa direto nos imports
 - Models herdam de `BaseModel` que define `id` (UUID), `created_at`, `updated_at`

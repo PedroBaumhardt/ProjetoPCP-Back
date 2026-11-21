@@ -21,42 +21,52 @@ async def _run(action: Callable, file: UploadFile) -> BaseView:
         count = await action(await file.read())
         content = {"imported": count}
     except ValidationError as e:
-        return ErrorView(message=e.errors(include_url=False, include_context=False), status_code=422)
+        return ErrorView(message="Erro na validacao",
+                         errors=e.errors(include_url=False,
+                                          include_context=False,
+                                          include_input=False), status_code=422)
     except ValueError as e:
         return ErrorView(message=str(e))
-    return SuccessView(message=f"Imported ${count} entries", **content)
+    return SuccessView(message=f"Imported {count} entries", **content)
 
 
 @subrouter.post("/recursos")
 async def import_recursos(session: SessionDep, file: UploadFile = File(...)):
-    return await _run(ImportController(session).import_recursos, file)
+    view = await _run(ImportController(session).import_recursos, file)
+    return view.to_response()
 
 
 @subrouter.post("/materiais")
 async def import_materiais(session: SessionDep, file: UploadFile = File(...)):
-    return await _run(ImportController(session).import_materiais, file)
+    view = await _run(ImportController(session).import_materiais, file)
+    return view.to_response()
 
 
 @subrouter.post("/produtos")
 async def import_produtos(session: SessionDep, file: UploadFile = File(...)):
-    return await _run(ImportController(session).import_produtos, file)
+    view = await _run(ImportController(session).import_produtos, file)
+    return view.to_response()
 
 
 @subrouter.post("/estrutura-produtos")
 async def import_estruturas_produto(session: SessionDep, file: UploadFile = File(...)):
-    return await _run(ImportController(session).import_estruturas_produto, file)
+    view = await _run(ImportController(session).import_estruturas_produto, file)
+    return view.to_response()
 
 
 @subrouter.post("/estoque")
 async def import_estoque(session: SessionDep, file: UploadFile = File(...)):
-    return await _run(ImportController(session).import_estoque, file)
+    view = await _run(ImportController(session).import_estoque, file)
+    return view.to_response()
 
 
 @subrouter.post("/pedidos")
 async def import_pedidos(session: SessionDep, file: UploadFile = File(...)):
-    return await _run(ImportController(session).import_pedidos, file)
+    view = await _run(ImportController(session).import_pedidos, file)
+    return view.to_response()
 
 
 @subrouter.post("/ordens-producao")
 async def import_ordens_producao(session: SessionDep, file: UploadFile = File(...)):
-    return await _run(ImportController(session).import_ordens_producao, file)
+    view = await _run(ImportController(session).import_ordens_producao, file)
+    return view.to_response()
