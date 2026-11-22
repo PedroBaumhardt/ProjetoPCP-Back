@@ -64,3 +64,18 @@ class Table(BaseModel):
                 temp_columns[key].append(value)
 
         return cls(columns=temp_columns)
+
+    def table_dump(self) -> dict:
+        dump = self.model_dump()
+
+        tbl = {"headers": {}, "table": {}}
+
+        for key, column in dump["columns"].items():
+            tbl["headers"][key] =  {
+                "type": column.type,
+                "label": column.label,
+                "hidden": column.hidden,
+            }
+            tbl["table"][key] = column.values
+
+        return tbl
