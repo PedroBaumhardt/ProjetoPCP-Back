@@ -3,12 +3,15 @@ from fastapi.exceptions import RequestValidationError
 
 from app.cmd.api.lifespan import lifespan
 from app.core.http.Router import Router
+from app.core.middleware.JWTMiddleware import JWTMiddleware
 from app.core.views.ErrorView import ErrorView
 
 # Iniciando o APP e registrando as rotas
 app = FastAPI(
     lifespan=lifespan
 )
+app.add_middleware(JWTMiddleware)
+
 router = Router()
 router.register_to_app(app)
 

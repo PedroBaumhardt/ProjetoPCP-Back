@@ -2,13 +2,27 @@ from fastapi import APIRouter, FastAPI
 
 from app.core.http.routes import example
 from app.core.http.routes import auth
+from app.core.http.routes import resource
+from app.core.http.routes import materials
+from app.core.http.routes import product
+from app.core.http.routes import product_structure
+from app.core.http.routes import stock
+from app.core.http.routes import order
+from app.core.http.routes import production_order
 import importlib
 import_routes = importlib.import_module("app.core.http.routes.import")
 
 DEFAULT_ROUTES: list[APIRouter] = [
     example.subrouter,
     import_routes.subrouter,
-    auth.subrouter
+    auth.subrouter,
+    resource.subrouter,
+    materials.subrouter,
+    product.subrouter,
+    product_structure.subrouter,
+    stock.subrouter,
+    order.subrouter,
+    production_order.subrouter
 ]
 
 class Router:

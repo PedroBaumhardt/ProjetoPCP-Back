@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import MetaData, func, UUID
+from sqlalchemy import MetaData, func, UUID, inspect
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -37,3 +37,9 @@ class BaseModel(DeclarativeBase):
         onupdate=func.now(),
         nullable=False
     )
+
+    def to_dict(self) -> dict:
+        return {
+            column.key: getattr(self, column.key)
+            for column in inspect(self).mapper.column_attrs
+        }
