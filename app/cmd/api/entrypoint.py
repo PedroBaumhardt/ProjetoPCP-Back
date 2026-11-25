@@ -10,6 +10,8 @@ from app.core.views.ErrorView import ErrorView
 app = FastAPI(
     lifespan=lifespan
 )
+
+# noinspection PyTypeChecker
 app.add_middleware(JWTMiddleware)
 
 router = Router()
@@ -18,7 +20,7 @@ router.register_to_app(app)
 
 # -- erro de validacao do request (body/query/arquivo ausente ou invalido) no mesmo formato das outras respostas;
 @app.exception_handler(RequestValidationError)
-async def request_validation_handler(request: Request, exc: RequestValidationError):
+async def request_validation_handler(_request: Request, exc: RequestValidationError):
     errors = [
         {key: error[key] for key in ("type", "loc", "msg") if key in error}
         for error in exc.errors()

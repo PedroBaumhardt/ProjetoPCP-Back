@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.controller import BaseController
 from app.core.service.ProductionOrderService import ProductionOrderService
-
+from app.core.schema.ProductionOrderSchema import ProductionOrderSchema
 
 class ProductionOrderController(BaseController[ProductionOrderService]):
     def __init__(self, session: AsyncSession) -> None:
@@ -18,3 +18,13 @@ class ProductionOrderController(BaseController[ProductionOrderService]):
 
     async def update_priority(self, id: str, priority: str) -> None:
         await self.service.update_priority(id, priority)
+
+    async def create(self, prod_order: ProductionOrderSchema) -> None:
+        await self.service.create(
+            numero=prod_order.code,
+            prioridade=prod_order.priority_str(),
+            produto_codigo=prod_order.product,
+            quantidade_planejada=prod_order.quantity,
+            data_inicio_prevista=prod_order.estimated_start,
+            observacao=prod_order.observation,
+        )

@@ -8,6 +8,8 @@ from app.core.service import BaseService
 
 
 class ProductService(BaseService[ProdutoModel]):
+    repository: ProdutoRepository
+
     def __init__(self, session: AsyncSession):
         super().__init__(ProdutoRepository(session))
 
@@ -23,3 +25,9 @@ class ProductService(BaseService[ProdutoModel]):
         if not data:
             raise ValueError("Product not found")
         return data.to_dict()
+
+    async def get_production_time_by_code(self, codigo: str) -> float:
+        total = await self.repository.get_production_time_by_code(codigo)
+        if total is None:
+            raise ValueError("Product not found")
+        return total

@@ -2,8 +2,9 @@ from fastapi import APIRouter
 
 from app.core.controller.ProductionOrderController import ProductionOrderController
 from app.core.http.dependencies import SessionDep
-from app.core.schema.ProductionOrder.SequenceNumberSchema import SequenceNumberSchema
+from app.core.schema.SequenceNumberSchema import SequenceNumberSchema
 from app.core.schema.PrioritySchema import PrioritySchema
+from app.core.schema.ProductionOrderSchema import ProductionOrderSchema
 from app.core.views.SuccessView import SuccessView
 from app.core.views.ErrorView import ErrorView
 from app.core.views.TableView import TableView
@@ -35,7 +36,13 @@ async def get_production_order_by_id(session: SessionDep, id: str):
 # POST =======================================================================================
 
 @subrouter.post("/")
-async def create_production_order(session: SessionDep, body: ProductionOrderSchema): ...
+async def create_production_order(session: SessionDep, body: ProductionOrderSchema):
+    try:
+        await ProductionOrderController(session).create(body)
+    except Exception as e:
+        return ErrorView(message=str(e))
+    return SuccessView(message="Ordem de producao criada com sucesso")
+
 
 # UPDATE =====================================================================================
 
