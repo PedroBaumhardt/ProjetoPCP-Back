@@ -1,6 +1,6 @@
 import typing
 
-from pydantic import BaseModel, field_serializer, field_validator, ValidationError
+from pydantic import BaseModel, field_serializer, model_validator
 
 
 def _get_type_name(value: typing.Any) -> str:
@@ -33,17 +33,17 @@ class TableColumn(BaseModel):
         if ctype is not None: return ctype
         return typing.cast(str, self.values[0].type)
 
-    @field_validator("values")
-    def _validate_values(self, values: list[TableField]) -> list[TableField]:
-        if len(values) == 0:
-            raise ValidationError("Table column must have at least one value")
+    @model_validator(mode="after")
+    def _validate_values(self) -> "TableColumn":
+        if len(self.values) == 0:
+            raise ValueError("Table column must have at least one value")
 
         expected_type = self.values[0].type
-        for value in values:
+        for value in self.values:
             if value.type != expected_type:
-                raise ValidationError("All values in a column must have the same type")
+                raise ValueError("All values in a column must have the same type")
 
-        return values
+        return self
 
     def append(self, value: typing.Any):
         self.values.append(TableField(value=value))

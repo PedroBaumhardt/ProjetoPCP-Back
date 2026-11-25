@@ -6,7 +6,6 @@ from app.core.http.routes import resource
 from app.core.http.routes import materials
 from app.core.http.routes import product
 from app.core.http.routes import product_structure
-from app.core.http.routes import stock
 from app.core.http.routes import order
 from app.core.http.routes import production_order
 import importlib
@@ -20,7 +19,6 @@ DEFAULT_ROUTES: list[APIRouter] = [
     materials.subrouter,
     product.subrouter,
     product_structure.subrouter,
-    stock.subrouter,
     order.subrouter,
     production_order.subrouter
 ]

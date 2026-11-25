@@ -15,3 +15,6 @@ class ProductionOrderController(BaseController[ProductionOrderService]):
     async def get_by_id(self, id: str) -> dict:
         data = await self.service.get_by_id(id)
         return data
+
+    async def update_priority(self, id: str, priority: str) -> None:
+        await self.service.update_priority(id, priority)

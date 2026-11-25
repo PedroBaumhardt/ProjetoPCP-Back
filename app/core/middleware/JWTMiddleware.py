@@ -8,6 +8,7 @@ from app.core.views.ErrorView import ErrorView
 class JWTMiddleware(BaseHTTPMiddleware):
     _EXEMPT_ROUTES = [
         "/auth/login",
+        "/auth/signin"
     ]
 
     def _get_token_from_header(self, request: Request):

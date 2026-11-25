@@ -23,3 +23,10 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
         if not data:
             raise ValueError("Production order not found")
         return data.to_dict()
+
+    async def update_priority(self, id: str, priority: str) -> None:
+        mdl = await self.repository.get_by_id(uuid.UUID(id))
+        if not mdl:
+            raise ValueError("Production order not found")
+        mdl.priority = priority
+        await self.repository.update(mdl)

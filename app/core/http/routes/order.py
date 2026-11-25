@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.core.controller.OrderController import OrderController
 from app.core.http.dependencies import SessionDep
+from app.core.schema.PrioritySchema import PrioritySchema
 from app.core.views.SuccessView import SuccessView
 from app.core.views.ErrorView import ErrorView
 from app.core.views.TableView import TableView
@@ -26,3 +27,13 @@ async def get_order_by_id(session: SessionDep, id: str):
     except Exception as e:
         return ErrorView(message=str(e))
     return SuccessView(message="Pedido carregado com sucesso", data=ord)
+
+# POST
+
+@subrouter.post("/")
+async def create_order(session: SessionDep, body: OrderSchema): ...
+
+# PUT
+
+@subrouter.put("/{id}/priority")
+async def update_order_priority(session: SessionDep, id: str, body: PrioritySchema): ...
