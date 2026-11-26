@@ -28,3 +28,9 @@ class ProductionOrderController(BaseController[ProductionOrderService]):
             data_inicio_prevista=prod_order.estimated_start,
             observacao=prod_order.observation,
         )
+
+    async def start(self, id: str) -> None:
+        await self.service.start(id)
+
+    async def cancel(self, id: str) -> None:
+        await self.service.cancel(id)

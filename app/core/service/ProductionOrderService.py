@@ -15,6 +15,14 @@ _MINUTES_PER_DAY = 24 * 60
 class ProductionOrderService(BaseService[OrdemProducaoModel]):
     repository: OrdemProducaoRepository
 
+    _STATUS: dict[str, str] = {
+        "ready": "liberada",
+        "in_progress": "em_producao",
+        "finished": "concluida",
+        "cancelled": "cancelada",
+    }
+    _OUTSIDE_SEQUENCE: int = -1
+
     def __init__(self, session: AsyncSession):
         super().__init__(OrdemProducaoRepository(session))
 
@@ -85,3 +93,29 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
             observacao=observacao
         )
         await self.repository.create(mdl)
+
+    async def start(self, id: str) -> None:
+        id = uuid.UUID(id)
+        mdl = await self.repository.get_by_id(id)
+
+        if not mdl:
+            raise ValueError("Production order not found")
+        elif mdl.status != self._STATUS["ready"]:
+            raise ValueError("Production order is not in a valis state to start")
+
+        mdl.status = self._STATUS["in_progress"]
+        await self.repository.update(mdl)
+
+    async def cancel(self, id: str) -> None:
+        id = uuid.UUID(id)
+        mdl = await self.repository.get_by_id(id)
+
+        if not mdl:
+            raise ValueError("Production order not found")
+        elif mdl.status == self._STATUS["finished"]:
+            raise ValueError("Production order already finished")
+
+        mdl.status = self._STATUS["cancelled"]
+        mdl.sequencia_programacao = self._OUTSIDE_SEQUENCE
+
+        await self.repository.update(mdl)
