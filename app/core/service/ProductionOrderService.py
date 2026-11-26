@@ -9,6 +9,8 @@ from app.core.model import OrdemProducaoModel
 from app.core.repository import OrdemProducaoRepository
 from app.core.service import BaseService
 from app.core.service.ProductService import ProductService
+from app.core.service.ProductStructureService import ProductStructureService
+from app.core.service.StockService import StockService
 
 _MINUTES_PER_DAY = 24 * 60
 
@@ -102,6 +104,14 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
             raise ValueError("Production order not found")
         elif mdl.status != self._STATUS["ready"]:
             raise ValueError("Production order is not in a valis state to start")
+
+        product = mdl.produto_rel.id
+        p_structure_service = ProductStructureService(self.repository.session)
+        materials = await p_structure_service.get_material_ids_with_product_id(product)
+
+        stock_service = StockService(self.repository.session)
+        for material in materials:
+            await stock_service.reserve_by_material_id(material, mdl.quantidade_planejada)
 
         mdl.status = self._STATUS["in_progress"]
         await self.repository.update(mdl)

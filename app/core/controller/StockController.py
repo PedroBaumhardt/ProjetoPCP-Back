@@ -11,3 +11,6 @@ class StockController(BaseController[StockService]):
     async def get_by_material_id(self, material_id: str) -> dict:
         data = await self.service.get_by_material_id(material_id)
         return data
+
+    async def increase_by_material_id(self, material_id: str, quantity: int) -> None:
+        await self.service.increase_by_material_id(material_id, quantity)

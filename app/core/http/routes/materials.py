@@ -41,4 +41,9 @@ async def get_material_stock(session: SessionDep, id: str):
 # PUT
 
 @subrouter.put("/{id}/stock/add/{amount}")
-async def increase_material_stock(session: SessionDep, id: str, amount: int): ...
+async def increase_material_stock(session: SessionDep, id: str, amount: int):
+    try:
+        await StockController(session).increase_by_material_id(id, amount)
+    except Exception as e:
+        return ErrorView(message=str(e))
+    return SuccessView(message="Estoque atualizado com sucesso")
