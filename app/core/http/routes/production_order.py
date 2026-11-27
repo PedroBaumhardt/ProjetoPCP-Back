@@ -56,7 +56,12 @@ async def update_production_order_priority(session: SessionDep, id: str, body: P
     return SuccessView(message="Prioridade da ordem de producao atualizada com sucesso")
 
 @subrouter.put("/{id}/sequence-number")
-async def update_production_order_sequence_number(session: SessionDep, id: str, body: SequenceNumberSchema): ...
+async def update_production_order_sequence_number(session: SessionDep, id: str, body: SequenceNumberSchema):
+    try:
+        await ProductionOrderController(session).update_sequence_number(id, body.sequence_number)
+    except Exception as e:
+        return ErrorView(message=str(e))
+    return SuccessView(message="Numero de sequencia da ordem de producao atualizado com sucesso")
 
 @subrouter.put("/{id}/start")
 async def start_production_order(session: SessionDep, id: str):

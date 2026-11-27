@@ -34,3 +34,6 @@ class ProductionOrderController(BaseController[ProductionOrderService]):
 
     async def cancel(self, id: str) -> None:
         await self.service.cancel(id)
+
+    async def update_sequence_number(self, id: str, new_seq_number: int) -> None:
+        await self.service.update_sequence_number(id, new_seq_number)
