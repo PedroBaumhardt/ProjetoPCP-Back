@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.model.EstruturaProdutoModel import EstruturaProdutoModel
+from app.core.model.ProdutoModel import ProdutoModel
 from app.core.repository.BaseRepository import BaseRepository
 
 
@@ -18,6 +19,16 @@ class EstruturaProdutoRepository(BaseRepository[EstruturaProdutoModel]):
         qry = (
             select(EstruturaProdutoModel)
             .where(EstruturaProdutoModel.produto_id == product_id)
+            .options(selectinload(EstruturaProdutoModel.componentes))
+        )
+        result = await self.session.execute(qry)
+        return result.scalars().one_or_none()
+
+    async def get_by_product_code(self, product_code: str) -> EstruturaProdutoModel | None:
+        qry = (
+            select(EstruturaProdutoModel)
+            .join(ProdutoModel, EstruturaProdutoModel.produto_id == ProdutoModel.id)
+            .where(ProdutoModel.codigo == product_code)
             .options(selectinload(EstruturaProdutoModel.componentes))
         )
         result = await self.session.execute(qry)

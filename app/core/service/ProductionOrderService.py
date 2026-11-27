@@ -103,13 +103,12 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
         elif mdl.status != self._STATUS["ready"]:
             raise ValueError("Production order is not in a valis state to start")
 
-        product = mdl.produto_rel.id
         p_structure_service = ProductStructureService(self.repository.session)
-        materials = await p_structure_service.get_material_ids_with_product_id(product)
+        materials = await p_structure_service.get_material_quantities_with_product_code(mdl.produto_codigo)
 
         stock_service = StockService(self.repository.session)
-        for material in materials:
-            await stock_service.reserve_by_material_id(material, mdl.quantidade_planejada)
+        for material, qty_per_unit in materials.items():
+            await stock_service.reserve_by_material_code(material, qty_per_unit * mdl.quantidade_planejada)
 
         mdl.status = self._STATUS["in_progress"]
         await self.repository.update(mdl)
@@ -127,6 +126,36 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
         location = await self._remove_from_sequence(mdl)
 
         await self._recalc_ending_date_since(location)
+
+    async def produce(self, id: str) -> int: # Produz 1 unidade e retorna a quantidade produzida até agora
+        id = uuid.UUID(id)
+
+        mdl = await self.repository.get_by_id(id)
+        if mdl is None:
+            raise ValueError("Production order not found")
+        elif mdl.status != self._STATUS["in_progress"]:
+            raise ValueError("Production order is not in progress")
+        elif mdl.quantidade_produzida >= mdl.quantidade_planejada:
+            raise ValueError("Production order already reached its planned quantity")
+
+        # Consome da reserva feita no start a quantidade de cada material para 1 unidade do produto
+        p_structure_service = ProductStructureService(self.repository.session)
+        materials = await p_structure_service.get_material_quantities_with_product_code(mdl.produto_codigo)
+
+        stock_service = StockService(self.repository.session)
+        for material, qty_per_unit in materials.items():
+            await stock_service.consume_reserved_by_material_code(material, qty_per_unit)
+
+        mdl.quantidade_produzida += 1
+        await self.repository.update(mdl)
+
+        if mdl.quantidade_produzida >= mdl.quantidade_planejada:
+            await self.end(mdl)
+
+        return mdl.quantidade_produzida
+
+    async def end(self, mdl: OrdemProducaoModel) -> None:
+        pass
 
     async def update_sequence_number(self, id: str, new_seq_number: int) -> None:
         # Regras: Se novo numero já está na fila, trocam de lugar
@@ -209,12 +238,16 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
             return
 
         # Se vamos recalcular tudo, não tem uma data de partida
-        curr_high_dt = mdl_list[0].data_fim_prevista if since > 0 else datetime.datetime.now()
+        curr_high_dt = mdl_list[0].data_fim_prevista if since > 0 else datetime.date.today()
         for mdl in mdl_list:
             if mdl.sequencia_programacao < since: continue
 
-            production_time = await self._get_prod_time_by_code_in_days(mdl.produto_codigo, product_service)
-            mdl.data_fim_prevista = curr_high_dt + datetime.timedelta(days=production_time)
+            # Mesma regra do create: começa no fim da fila ou na data pedida pelo cliente, o que for maior
+            start_dt = max(curr_high_dt, mdl.data_inicio_prevista)
+            production_time = await self._get_prod_time_by_code_in_days(mdl.produto_codigo,
+                                                                         product_service,
+                                                                         mult=mdl.quantidade_planejada)
+            mdl.data_fim_prevista = start_dt + datetime.timedelta(days=production_time)
             curr_high_dt = mdl.data_fim_prevista
 
             await self.repository.update(mdl)

@@ -80,4 +80,9 @@ async def cancel_production_order(session: SessionDep, id: str):
     return SuccessView(message="Ordem de producao cancelada com sucesso")
 
 @subrouter.put("/{id}/produce")
-async def produce_production_order(session: SessionDep, id: str): ...
+async def produce_production_order(session: SessionDep, id: str):
+    try:
+        await ProductionOrderController(session).produce(id)
+    except Exception as e:
+        return ErrorView(message=str(e))
+    return SuccessView(message="Producao registrada com sucesso")

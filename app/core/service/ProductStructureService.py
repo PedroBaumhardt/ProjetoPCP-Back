@@ -26,6 +26,16 @@ class ProductStructureService(BaseService[EstruturaProdutoModel]):
             raise ValueError("Product structure not found")
         return data.to_dict()
 
-    async def get_material_ids_with_product_id(self, product_id) -> list[str]:
-        mdl = await self.repository.get_by_product_id(product_id)
-        return [item.material_id for item in mdl.compomponentes]
+    async def get_material_quantities_with_product_code(self, product_code: str) -> dict[str, float]:
+        # Retorna {material_codigo: quantidade por unidade do produto, já com a perda}
+        # Soma caso o material apareça mais de uma vez na estrutura
+        mdl = await self.repository.get_by_product_code(product_code)
+        if mdl is None:
+            raise ValueError("Product structure not found")
+
+        quantities: dict[str, float] = {}
+        for item in mdl.componentes:
+            loss = (item.perda_percentual or 0) / 100
+            qty = item.quantidade * (1 + loss)
+            quantities[item.material_codigo] = quantities.get(item.material_codigo, 0) + qty
+        return quantities
