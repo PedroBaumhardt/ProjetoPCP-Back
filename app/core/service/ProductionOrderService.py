@@ -1,6 +1,7 @@
 import datetime
 import math
 import uuid
+from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.model import OrdemProducaoModel
@@ -126,6 +127,54 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
         location = await self._remove_from_sequence(mdl)
 
         await self._recalc_ending_date_since(location)
+
+    async def update_sequence_number(self, id: str, new_seq_number: int) -> None:
+        # Regras: Se novo numero já está na fila, trocam de lugar
+        #         Se novo numero é maior que fim da fila, vai para o fim da fila
+        id = uuid.UUID(id)
+
+        if new_seq_number < 0:
+            raise ValueError("Sequence number can't be negative")
+
+        mdl = await self.repository.get_by_id(id)
+        if mdl is None:
+            raise ValueError("Production order not found")
+        elif mdl.status != self._STATUS["ready"]:
+            raise ValueError("Production order is not in a valid state to change sequence")
+        elif mdl.sequencia_programacao < 0:
+            raise ValueError("Production order is not in the sequence")
+
+        mdl_at_location = await self.repository.get_by_sequence_num(new_seq_number)
+        if mdl_at_location is not None:
+            await self._flip_sequence_numbers(mdl, mdl_at_location)
+            return
+
+        # Ainda contém a própria mdl, então nunca é None aqui. Após a remoção abaixo, essa posição fica livre
+        end_of_queue = await self.repository.get_highest_sequencia_programacao()
+        end_of_queue = cast(int, end_of_queue)
+
+        location = await self._remove_from_sequence(mdl)
+        mdl.sequencia_programacao = end_of_queue
+        await self.repository.update(mdl)
+
+        await self._recalc_ending_date_since(location)
+
+    async def _flip_sequence_numbers(self, mdl1: OrdemProducaoModel, mdl2: OrdemProducaoModel) -> None:
+        seq1, seq2 = mdl1.sequencia_programacao, mdl2.sequencia_programacao
+        if seq1 == seq2:
+            return
+
+        # O índice único não é adiável: tira mdl1 da fila antes de trocar, gravando a cada passo
+        mdl1.sequencia_programacao = self._OUTSIDE_SEQUENCE
+        await self.repository.update(mdl1)
+
+        mdl2.sequencia_programacao = seq1
+        await self.repository.update(mdl2)
+
+        mdl1.sequencia_programacao = seq2
+        await self.repository.update(mdl1)
+
+        await self._recalc_ending_date_since(min(seq1, seq2))
 
     @staticmethod
     async def _get_prod_time_by_code_in_days(cod: str, prod_service: ProductService, mult: int = 1) -> int:
