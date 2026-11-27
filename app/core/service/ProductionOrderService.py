@@ -1,10 +1,8 @@
 import datetime
 import math
 import uuid
-from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.model import OrdemProducaoModel
 from app.core.repository import OrdemProducaoRepository
 from app.core.service import BaseService
@@ -23,6 +21,7 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
         "finished": "concluida",
         "cancelled": "cancelada",
     }
+    _INITIAL_STATUS: str = _STATUS["ready"]
     _OUTSIDE_SEQUENCE: int = -1
 
     def __init__(self, session: AsyncSession):
@@ -58,26 +57,24 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
                      pedido_numero: str | None = None,
                      observacao: str | None = None,
                      ) -> None:
-        initial_status = "liberada"
         if data_emissao is None:
             data_emissao = datetime.date.today()
 
         sequencia_programacao = await self.repository.get_highest_sequencia_programacao()
-        if not sequencia_programacao:
+        if sequencia_programacao is None:
             sequencia_programacao = -1
         sequencia_programacao += 1
 
-        product_service = ProductService(self.repository.session)
-        production_minutes = await product_service.get_production_time_by_code(produto_codigo)
-        production_minutes *= quantidade_planejada
-        production_days = math.ceil(production_minutes / _MINUTES_PER_DAY)
+        production_days = await self._get_prod_time_by_code_in_days(produto_codigo,
+                                                                    ProductService(self.repository.session),
+                                                                    mult=quantidade_planejada)
 
         current_highest_date = await self.repository.get_higher_data_fim_prevista()
         if not current_highest_date or current_highest_date < data_inicio_prevista:
             current_highest_date = data_inicio_prevista
         data_fim_prevista = current_highest_date + datetime.timedelta(days=production_days)
 
-        status = initial_status
+        status = self._INITIAL_STATUS
         quantidade_produzida = 0
 
         mdl = OrdemProducaoModel(
@@ -126,6 +123,49 @@ class ProductionOrderService(BaseService[OrdemProducaoModel]):
             raise ValueError("Production order already finished")
 
         mdl.status = self._STATUS["cancelled"]
-        mdl.sequencia_programacao = self._OUTSIDE_SEQUENCE
+        location = await self._remove_from_sequence(mdl)
 
+        await self._recalc_ending_date_since(location)
+
+    @staticmethod
+    async def _get_prod_time_by_code_in_days(cod: str, prod_service: ProductService, mult: int = 1) -> int:
+        production_minutes = await prod_service.get_production_time_by_code(cod)
+        production_minutes *= mult
+        production_days = math.ceil(production_minutes / _MINUTES_PER_DAY)
+        return production_days
+
+    async def _remove_from_sequence(self, mdl: OrdemProducaoModel) -> int: # Retorna o local onde foi removido da sequencia
+        starting_point = mdl.sequencia_programacao
+
+        mdl.sequencia_programacao = self._OUTSIDE_SEQUENCE
         await self.repository.update(mdl)
+
+        mdl_list = await self.repository.get_all_sequence_ordered(starting_point)
+        for mdl in mdl_list:
+            mdl.sequencia_programacao -= 1
+            await self.repository.update(mdl)
+        return starting_point
+
+    async def _recalc_ending_date_since(self, since:int = 0) -> None:
+        product_service = ProductService(self.repository.session)
+
+        since_query = since
+        if since < 0:
+            raise KeyError("Cant calc dates with negative sequence")
+        elif since > 0:
+            since_query -= 1 # Faz a query buscando 1 anterior para usar de ponto de partida nos calculos
+
+        mdl_list = await self.repository.get_all_sequence_ordered(since=since_query)
+        if len(mdl_list) <= 0:
+            return
+
+        # Se vamos recalcular tudo, não tem uma data de partida
+        curr_high_dt = mdl_list[0].data_fim_prevista if since > 0 else datetime.datetime.now()
+        for mdl in mdl_list:
+            if mdl.sequencia_programacao < since: continue
+
+            production_time = await self._get_prod_time_by_code_in_days(mdl.produto_codigo, product_service)
+            mdl.data_fim_prevista = curr_high_dt + datetime.timedelta(days=production_time)
+            curr_high_dt = mdl.data_fim_prevista
+
+            await self.repository.update(mdl)

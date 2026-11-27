@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import String, Integer, Date, ForeignKey
+from sqlalchemy import String, Integer, Date, ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.model.BaseModel import BaseModel
@@ -13,6 +13,15 @@ if TYPE_CHECKING:
 
 class OrdemProducaoModel(BaseModel):
     __tablename__ = "ordens_producao"
+    # -- sequencia_programacao unica apenas para ordens na fila (-1 = fora da sequencia, pode repetir)
+    __table_args__ = (
+        Index(
+            "uq_ordens_producao_sequencia_programacao",
+            "sequencia_programacao",
+            unique=True,
+            postgresql_where=text("sequencia_programacao >= 0"),
+        ),
+    )
 
     numero:                Mapped[str]            = mapped_column(String(20), unique=True, nullable=False)
     produto_codigo:        Mapped[str]            = mapped_column(String(10), ForeignKey("produtos.codigo"), nullable=False)
